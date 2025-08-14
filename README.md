@@ -1,7 +1,7 @@
 # CS-GY 6813 — Information Security & Privacy  
 ## RePy Reference Monitor & Attack Suite
 
-**Author:** [Your Name]  
+**Author:** Hariharan Loganathan
 **NetID:** hl5865  
 **Course:** CS-GY 6813 — Spring 2025  
 **Grade:** **A**  
