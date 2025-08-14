@@ -107,7 +107,4 @@ Replace `attackcaseX.r2py` with the desired attack case.
 
 ---
 
-## 📌 Notes  
-- All code executes silently in final form (security requirement).  
-- Locking, validation, and commit logic designed for both security and correctness.  
-- Offensive tests crafted to be *precise* — exploiting specific weaknesses without false positives.
+
