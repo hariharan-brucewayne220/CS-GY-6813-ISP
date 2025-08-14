@@ -1,0 +1,3 @@
+file = ABopenfile("spacesneak", True)
+file.writeat(" sneaky", 0)  # Starts with a space — should be rejected
+file.close()

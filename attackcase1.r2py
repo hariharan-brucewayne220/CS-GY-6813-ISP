@@ -1,0 +1,3 @@
+file = ABopenfile("invalidfirmware", True)
+file.writeat("BROKEN", 0)  # Invalid firmware
+file.close()

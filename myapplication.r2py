@@ -1,0 +1,24 @@
+myfile=ABopenfile("story.txt",False)
+log("Hello World!")
+
+firstCharacter = myfile.readat(1,0)
+log(firstCharacter)
+
+
+lengthOfFile = len(myfile.readat(1000,0))
+log(lengthOfFile)
+
+endPosition = lengthOfFile - 2
+lastCharacter =  myfile.readat(1,endPosition)
+log(lastCharacter)
+
+
+#change 'lamb' in first sentence to LAMB
+myfile.writeat("LAMB",18)
+S = endPosition
+R = 0
+#add sentence to the end
+myfile.writeat("\nAnd the children loved the lamb as well.", S+R)
+
+
+myfile.close

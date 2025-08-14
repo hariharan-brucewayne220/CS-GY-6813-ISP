@@ -1,0 +1,3 @@
+file = ABopenfile("malinit", False) 
+file.writeat("SE", 0)
+file.close()

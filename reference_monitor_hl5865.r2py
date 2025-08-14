@@ -1,0 +1,142 @@
+TYPE = "type" 
+ARGS = "args"
+RETURN = "return"
+EXCP = "exceptions"
+TARGET = "target"
+FUNC = "func"
+OBJC = "objc"
+
+# Shared lock registry - must be a global to work properly across instances
+_lock_registry = {}
+
+def _get_lock(filename):
+    if filename not in _lock_registry:
+        _lock_registry[filename] = createlock()
+    return _lock_registry[filename]
+
+class ABFile():
+    def __init__(self, filename, create):
+        # Initialize file paths
+        self.filename = filename
+        self.Afn = filename + '.a'
+        self.Bfn = filename + '.b'
+        
+        # Use a class-level lock to ensure one instance initializes at a time
+        self.lock = _get_lock(filename)
+        
+        # Acquire the lock for thread safety - will be held until close() is called
+        self.lock.acquire(True)
+        
+        try:
+            # Simple check if file exists
+            file_exists = self.Afn in listfiles()
+            
+            if create:
+                # Always open/create both files
+                self.Afile = openfile(self.Afn, True)
+                self.Bfile = openfile(self.Bfn, True)
+                
+                # Initialize only if creating a new file
+                if not file_exists:
+                    self.Afile.writeat('SE', 0)
+                
+                # Always sync B with A
+                self.Bfile.writeat(self.Afile.readat(None, 0), 0)
+            else:
+                # Opening existing file
+                if file_exists:
+                    self.Afile = openfile(self.Afn, True)
+                    self.Bfile = openfile(self.Bfn, True)
+                    # Always sync B with A
+                    self.Bfile.writeat(self.Afile.readat(None, 0), 0)
+                else:
+                    # File doesn't exist and not creating
+                    self.lock.release()  # Release lock on error
+                    raise Exception("File does not exist")
+        except:
+            # Release lock on any exception
+            self.lock.release()
+            raise
+
+    def writeat(self, data, offset):
+        if not data or data[0] == ' ':
+            return None
+            
+        try:
+            current_data = self.Bfile.readat(None, 0)
+            current_len = len(current_data)
+            if offset > current_len:
+                padding = '\0' * (offset - current_len)
+                self.Bfile.writeat(padding, current_len)
+            self.Bfile.writeat(data, offset)
+            return len(data)
+        except:
+            return None
+
+    def readat(self, bytes, offset):
+        try:
+            return self.Afile.readat(bytes, offset)
+        except:
+            return ""
+
+    def close(self):
+        try:
+            b_data = self.Bfile.readat(None, 0)
+            valid = b_data.startswith("S") and b_data.endswith("E")
+
+            self.Afile.close()
+            self.Bfile.close()
+
+            if valid:
+                removefile(self.Afn)
+                new_a = openfile(self.Afn, True)
+                new_a.writeat(b_data, 0)
+                new_a.close()
+
+            removefile(self.Bfn)
+            return True
+        except:
+            return None
+        finally:
+            # Always release the lock in close
+            self.lock.release()
+
+def ABopenfile(filename, create):
+    return ABFile(filename, create)
+
+# Autograder interface
+sec_file_def = {
+    "obj-type": ABFile,
+    "name": "ABFile",
+    "writeat": {
+        "type": "func",
+        "args": (str, int),
+        "exceptions": Exception,
+        "return": (int, type(None)),
+        "target": ABFile.writeat
+    },
+    "readat": {
+        "type": "func",
+        "args": ((int, type(None)), int),
+        "exceptions": Exception,
+        "return": str,
+        "target": ABFile.readat
+    },
+    "close": {
+        "type": "func",
+        "args": None,
+        "exceptions": None,
+        "return": (bool, type(None)),
+        "target": ABFile.close
+    }
+}
+
+CHILD_CONTEXT_DEF["ABopenfile"] = {
+    TYPE: OBJC,
+    ARGS: (str, bool),
+    EXCP: Exception,
+    RETURN: sec_file_def,
+    TARGET: ABopenfile
+}
+
+secure_dispatch_module()

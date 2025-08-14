@@ -1,0 +1,8 @@
+file = ABopenfile("secretbackup", True)
+file.writeat("SecretSE", 0)
+file.close()
+
+bfile = openfile("secretbackup.b", False)
+contents = bfile.readat(100, 0)
+
+bfile.close()
